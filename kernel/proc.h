@@ -120,7 +120,7 @@ struct proc {
   int change_queue;
   int n_run;
   int q_enter;
-  int q[NMLFQ];
+  int q[NMLFQ]; 
 };
 
 struct Queue {

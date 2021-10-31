@@ -611,6 +611,7 @@ void scheduler(void)
       {
         actually_set_priority(p->dynamic_priority, p->pid);
         p->change_queue = 1 << p->level;
+        p->q[p->level]++;
         p->state = RUNNING;
         c->proc = p;
         p->q_enter = ticks;
@@ -870,7 +871,7 @@ void procdump(void)
   #endif
 
   #ifdef MLFQ
-  printf("Pid \t Priority \t State \t R-Time \t W-Time \t Num_runs \t q0 \t q1 \t q2 \t q3 \t q4 \n");
+  printf("Pid \t Priority \t State \t     R-Time \t W-Time\t Num_runs \t q0 \t q1 \t q2 \t q3 \t q4 \n");
   for (p = proc; p < &proc[NPROC]; p++)
   {
     if (p->state == UNUSED)
@@ -880,7 +881,7 @@ void procdump(void)
     else
       state = "???";
     
-    printf("%d \t %d \t %s \t %d \t %d \t %d \t %d",p->pid,p->dynamic_priority, state,p->rtime,p->sleep_time,p->n_run);
+    printf("%d \t %d \t\t %s \t %d\t %d\t %d\t\t %d \t %d \t %d \t %d \t %d",p->pid,p->dynamic_priority, state,p->rtime,p->sleep_time,p->n_run,p->q[0], p->q[1], p->q[2], p->q[3],p->q[4]);
     printf("\n");
   }
   #endif
