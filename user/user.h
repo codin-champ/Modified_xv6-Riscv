@@ -42,3 +42,4 @@ int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
 int waitx(int*, int* /*wtime*/, int* /*rtime*/);
+int set_priority(int,int);

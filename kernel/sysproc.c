@@ -127,3 +127,24 @@ sys_waitx(void)
     return -1;
   return ret;
 }
+
+uint64
+sys_set_priority(void)
+{
+	#ifndef PBS
+		return -1;
+	#endif
+
+	int new_priority, pid;
+	if (argint(0, &new_priority) < 0) 
+		return -1;
+	
+	if (argint(1, &pid) < 0) 
+		return -1;
+	
+	if (new_priority > 100 || new_priority < 0) 
+		return -1;
+	
+
+	return actually_set_priority(new_priority, pid);
+}

@@ -191,6 +191,7 @@ void            virtio_disk_intr(void);
 
 //strace.c
 void            trace(int);
+int actually_set_priority(int, int);
 
 //queue.c
 void push(struct Queue *list, struct proc *element);

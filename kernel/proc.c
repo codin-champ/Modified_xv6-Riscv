@@ -609,6 +609,7 @@ void scheduler(void)
       acquire(&p->lock);
       if (p->state == RUNNABLE)
       {
+        actually_set_priority(p->dynamic_priority, p->pid);
         p->change_queue = 1 << p->level;
         p->state = RUNNING;
         c->proc = p;
@@ -827,6 +828,33 @@ void procdump(void)
   char *state;
 
   printf("\n");
+  #ifdef FCFS
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+    if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
+      state = states[p->state];
+    else
+      state = "???";
+    printf("%d %s %s", p->pid, state, p->name);
+    printf("\n");
+  }
+  #endif
+
+  #ifdef RR
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+    if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
+      state = states[p->state];
+    else
+      state = "???";
+    printf("%d %s %s", p->pid, state, p->name);
+    printf("\n");
+  }
+  #endif
+  #ifdef PBS
+  printf("Pid \t Priority \t State \t Run-Time \t Sleep-Time \t Num_runs \n");
   for (p = proc; p < &proc[NPROC]; p++)
   {
     if (p->state == UNUSED)
@@ -835,9 +863,27 @@ void procdump(void)
       state = states[p->state];
     else
       state = "???";
-    printf("%d %s %s", p->pid, state, p->name);
+    
+    printf("%d\t %d \t\t %s \t %d \t\t %d \t %d", p->pid,p->dynamic_priority,state, p->rtime, p->sleep_time, p->n_run);
     printf("\n");
   }
+  #endif
+
+  #ifdef MLFQ
+  printf("Pid \t Priority \t State \t R-Time \t W-Time \t Num_runs \t q0 \t q1 \t q2 \t q3 \t q4 \n");
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p->state == UNUSED)
+      continue;
+    if (p->state >= 0 && p->state < NELEM(states) && states[p->state])
+      state = states[p->state];
+    else
+      state = "???";
+    
+    printf("%d \t %d \t %s \t %d \t %d \t %d \t %d",p->pid,p->dynamic_priority, state,p->rtime,p->sleep_time,p->n_run);
+    printf("\n");
+  }
+  #endif
 }
 
 
@@ -901,4 +947,23 @@ update_time()
     }
     release(&p->lock); 
   }
+}
+
+int actually_set_priority(int new_priority, int pid) 
+{
+	//printf("Tobeset=%d\n TargetPid=%d\n", new_priority, pid);
+	struct proc *p;
+	for (p = proc; p < &proc[NPROC]; p++)
+	{
+		if(p->pid == pid)
+		{
+			int old_prio = p->static_priority;
+			p->static_priority = new_priority;
+			p->niceness = 5;
+		
+			p->sleep_time = 0;
+			return old_prio;
+		}
+	}
+	return -1;
 }
