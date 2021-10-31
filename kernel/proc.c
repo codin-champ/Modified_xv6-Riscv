@@ -11,7 +11,7 @@ struct cpu cpus[NCPU];
 struct proc proc[NPROC];
 
 struct proc *initproc;
-
+struct Queue mlfq[NMLFQ];
 int nextpid = 1;
 struct spinlock pid_lock;
 
@@ -489,6 +489,39 @@ fcfs(void)
 }
 #endif
 
+#ifdef MLFQ
+static struct proc *
+mlfq_scheduler(void)
+{
+  ageing();
+  struct proc *p;
+  for(p = proc; p < &proc[NPROC]; p++)
+  {
+    if(p->state == RUNNABLE && p->in_queue == 0)
+    {
+      push(&mlfq[p->level],p);
+      p->in_queue = 1;
+    }
+  }
+
+  for(int level = 0; level <NMLFQ; level++)
+  {
+    while(mlfq[level].size)
+    {
+      struct proc *p = front(&mlfq[level]);
+      pop(&mlfq[level]);
+      p->in_queue = 0;
+      if(p->state == RUNNABLE)
+      {
+        p->q_enter = ticks;
+        return p;
+      }
+    }
+  }
+  return 0;
+}
+#endif
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -513,13 +546,19 @@ void scheduler(void)
 #ifdef FCFS
     p = fcfs();
 #endif
+#ifdef MLFQ
+  p = mlfq_scheduler();
+#endif
     if (p)
     {
       acquire(&p->lock);
       if (p->state == RUNNABLE)
       {
+        p->change_queue = 1 << p->level;
         p->state = RUNNING;
         c->proc = p;
+        p->q_enter = ticks;
+        p->n_run++;
         swtch(&c->context, &p->context);
 
         // Process is done running for now.
@@ -696,6 +735,25 @@ int either_copyin(void *dst, int user_src, uint64 src, uint64 len)
     return 0;
   }
 }
+
+
+void
+ageing(void) {
+  for (struct proc *p = proc; p < &proc[NPROC]; p++) {
+    if (p->state == RUNNABLE && ticks - p->q_enter >= AGETICK) {
+      printf("Ageing: %d\n", p->pid);
+      if (p->in_queue) {
+        qerase(&mlfq[p->level], p->pid);
+        p->in_queue = 0;
+      }
+      if (p->level != 0) {
+        p->level--;
+      }
+      p->q_enter = ticks;
+    }
+  }
+}
+
 
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.

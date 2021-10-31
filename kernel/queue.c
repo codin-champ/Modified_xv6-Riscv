@@ -1,9 +1,10 @@
 #include "types.h"
+#include "spinlock.h"
 #include "defs.h"
 #include "param.h"
 #include "memlayout.h"
 #include "proc.h"
-#include "spinlock.h"
+
 
 void
 push (struct Queue *list, struct proc *element)
@@ -56,6 +57,7 @@ qerase(struct Queue *list, int pid)
   }
 
   list->tail--;
+  list->size--;
   if (list->tail < 0) {
     list->tail = NPROC;
   }

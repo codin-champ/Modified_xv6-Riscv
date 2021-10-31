@@ -8,6 +8,8 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct Queue;
+typedef uint64 *pagetable_t; // 512 PTEs
 
 // bio.c
 void            binit(void);
@@ -184,5 +186,17 @@ void            virtio_disk_intr(void);
 
 //strace.c
 void            trace(int);
+
+//queue.c
+void push(struct Queue *list, struct proc *element);
+
+void pop(struct Queue *list);
+
+struct proc *front(struct Queue *list);
+
+void qerase(struct Queue *list, int pid);
+
+void ageing(void);
+
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

@@ -196,28 +196,28 @@ syscall(void)
   num = p->trapframe->a7;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) 
   {
+    int arg1 = p->trapframe->a0;
+    int arg2 = p->trapframe->a1;
+    int arg3 = p->trapframe->a2;
     p->trapframe->a0 = syscalls[num]();
     int mask = p->mask;
     if((mask >> num) &0x1 )
     {
       //printf("%d: sycscall %s (%d, %d, %d) ->%d\n",p->pid,names[num],p->trapframe->a2,p->trapframe->a1,p->trapframe->a3,p->trapframe->a0);
       printf("%d: syscall %s (",p->pid,names[num]);
-      if(count[num]==3)
+      if(count[num] == 1)
       {
-        printf("%d, %d, %d) -> %d\n", p->trapframe->a3,p->trapframe->a2,p->trapframe->a1, p->trapframe->a0);
+       printf("%d", arg1); 
       }
-      if(count[num]==2)
+      if(count[num] == 2)
       {
-        printf("%d, %d) -> %d\n", p->trapframe->a2,p->trapframe->a1, p->trapframe->a0);
+        printf("%d %d", arg1, arg2);
       }
-      if(count[num]==1)
+      if(count[num] == 3)
       {
-        printf("%d) -> %d\n",p->trapframe->a1, p->trapframe->a0);
+        printf("%d %d %d", arg1, arg2, arg3);
       }
-      if(count[num]==0)
-      {
-        printf(") -> %d\n",p->trapframe->a0);
-      }
+      printf(") ->%d\n",p->trapframe->a0);
     }
   } 
   else 
