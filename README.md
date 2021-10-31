@@ -36,19 +36,19 @@ This is beneficial for a process as its priority remains maintained and it does 
 
 - ### Round Robin:
 
-  - Run-Time: 66
-  - Wait-Time: 33
+  - Run-Time: 26
+  - Wait-Time: 73
 - ### FCFS:
 
-  - Run-Time: 80
-  - Wait-Time: 19
+  - Run-Time: 22
+  - Wait-Time: 77
 - ### PBS:
 
-  - Run-Time: 61
-  - Wait-Time: 39
+  - Run-Time: 27
+  - Wait-Time: 72
 - ### MLFQ:
 
-  - Run-Time: 60
-  - Wait-Time: 24
+  - Run-Time: 24
+  - Wait-Time: 60
 
 The schedulertest suggests that the FCFS scheduling algorithm provides the best output as compared the rest of the scheduling algorithms since the Run-ime is higher and the Wait-Time is lower.
