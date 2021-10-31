@@ -127,6 +127,9 @@ found:
   p->state = USED;
   p->ctime = ticks;
   p->rtime = 0;
+  p->niceness = 5;
+  p->static_priority = 60;
+  p->dynamic_priority = 60;
 
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0)
@@ -495,23 +498,23 @@ mlfq_scheduler(void)
 {
   ageing();
   struct proc *p;
-  for(p = proc; p < &proc[NPROC]; p++)
+  for (p = proc; p < &proc[NPROC]; p++)
   {
-    if(p->state == RUNNABLE && p->in_queue == 0)
+    if (p->state == RUNNABLE && p->in_queue == 0)
     {
-      push(&mlfq[p->level],p);
+      push(&mlfq[p->level], p);
       p->in_queue = 1;
     }
   }
 
-  for(int level = 0; level <NMLFQ; level++)
+  for (int level = 0; level < NMLFQ; level++)
   {
-    while(mlfq[level].size)
+    while (mlfq[level].size)
     {
       struct proc *p = front(&mlfq[level]);
       pop(&mlfq[level]);
       p->in_queue = 0;
-      if(p->state == RUNNABLE)
+      if (p->state == RUNNABLE)
       {
         p->q_enter = ticks;
         return p;
@@ -522,7 +525,54 @@ mlfq_scheduler(void)
 }
 #endif
 
-// Per-CPU process scheduler.
+#ifdef PBS
+
+static struct proc *
+pbs_scheduler()
+{
+  //struct proc *p;
+  int min_priority = 10000;
+  int index = 1;
+
+  for (int i = 0; i < NPROC; i++)
+  {
+    if (proc[i].state != RUNNABLE)
+    {
+      continue;
+    }
+    if (proc[i].dynamic_priority < min_priority)
+    {
+      min_priority = proc[i].dynamic_priority;
+      index = i;
+    }
+    if (proc[i].dynamic_priority == min_priority)
+    {
+      if (proc[i].n_run < proc[index].n_run)
+      {
+        min_priority = proc[i].dynamic_priority;
+        index = i;
+      }
+    }
+
+    if (proc[i].dynamic_priority == min_priority)
+    {
+      if (proc[i].n_run == proc[index].n_run)
+      {
+        if (proc[i].ctime < proc[index].ctime)
+        {
+          min_priority = proc[i].dynamic_priority;
+          index = i;
+        }
+      }
+    }
+  }
+  return &proc[index];
+}
+
+
+#endif
+
+// Per-CPU process 
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
 //  - choose a process to run.
@@ -547,7 +597,11 @@ void scheduler(void)
     p = fcfs();
 #endif
 #ifdef MLFQ
-  p = mlfq_scheduler();
+    p = mlfq_scheduler();
+#endif
+
+#ifdef PBS
+    p = pbs_scheduler();
 #endif
     if (p)
     {
@@ -736,24 +790,26 @@ int either_copyin(void *dst, int user_src, uint64 src, uint64 len)
   }
 }
 
-
-void
-ageing(void) {
-  for (struct proc *p = proc; p < &proc[NPROC]; p++) {
-    if (p->state == RUNNABLE && ticks - p->q_enter >= AGETICK) {
+void ageing(void)
+{
+  for (struct proc *p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p->state == RUNNABLE && ticks - p->q_enter >= AGETICK)
+    {
       printf("Ageing: %d\n", p->pid);
-      if (p->in_queue) {
+      if (p->in_queue)
+      {
         qerase(&mlfq[p->level], p->pid);
         p->in_queue = 0;
       }
-      if (p->level != 0) {
+      if (p->level != 0)
+      {
         p->level--;
       }
       p->q_enter = ticks;
     }
   }
 }
-
 
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.
