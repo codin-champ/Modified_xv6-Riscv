@@ -8,6 +8,7 @@
 
 struct spinlock tickslock;
 uint ticks;
+extern struct proc proc[NPROC];
 
 extern char trampoline[], uservec[], userret[];
 
@@ -193,6 +194,25 @@ void kerneltrap()
   w_sstatus(sstatus);
 }
 
+int min(int a, int b)
+{
+  if(a>b)
+  {
+    return b;
+  }
+  return a;
+}
+
+int max(int a, int b)
+{
+  if(a>b)
+  {
+    return a;
+  }
+  return b;
+}
+
+
 void clockintr()
 {
   acquire(&tickslock);
@@ -205,6 +225,26 @@ void clockintr()
     myproc()->rtime++;
     myproc()->q[myproc()->level]++;
     myproc()->change_queue--;
+  }
+  
+  struct proc *p;
+
+  for(p = proc; p<&proc[NPROC]; p++)
+  {
+    acquire(&p->lock);
+    if(p->state == SLEEPING)
+    {
+     p->sleep_time++;
+    }
+    if(p->state == RUNNING)
+    {
+      p->rtime++;
+    }
+
+    p->niceness = (p->sleep_time/(p->sleep_time + p->rtime))*10;
+    p->dynamic_priority = max(0, min(p->static_priority - p->niceness + 5, 100));
+    release(&p->lock);
+    
   }
 }
 

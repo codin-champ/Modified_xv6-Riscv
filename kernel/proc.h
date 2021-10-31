@@ -110,6 +110,10 @@ struct proc {
   int ctime;
   int etime;
   int rtime;
+  int sleep_time;
+  int niceness;
+  int static_priority;
+  int dynamic_priority;
 
   int level;
   int in_queue;

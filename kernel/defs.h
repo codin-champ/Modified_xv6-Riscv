@@ -11,6 +11,9 @@ struct superblock;
 struct Queue;
 typedef uint64 *pagetable_t; // 512 PTEs
 
+int max(int , int);
+int min(int, int);
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
